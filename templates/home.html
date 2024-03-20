@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Data</title>
+</head>
+<body>
+
+<h1>Location Data</h1>
+
+<div id="locationData"></div>
+
+<button id="getLocationBtn">Get Location</button>
+
+<script>
+    document.getElementById('getLocationBtn').addEventListener('click', getLocation);
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(sendLocation);
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    }
+
+    function sendLocation(position) {
+        var latitude = position.coords.latitude;
+        var longitude = position.coords.longitude;
+
+        var locationData = {
+            'latitude': latitude,
+            'longitude': longitude
+        };
+
+        fetch('/send-location/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(locationData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Location data sent successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error sending location data:', error);
+        });
+    }
+
+    // Function to get CSRF token for POST request
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+</body>
+</html>
